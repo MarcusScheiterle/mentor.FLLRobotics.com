@@ -1,0 +1,150 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  > :nth-child(n) {
+    min-width: 17rem;
+    max-width: 25vw;
+  }
+}
+
+.section {
+  flex-direction: column;
+  width: 75vw;
+  position: relative;
+
+  @media screen and (min-width: 600px) {
+    width: 50vw;
+    max-width: 20rem;
+  }
+
+  & > :nth-child(n) {
+    margin-bottom: 1rem;
+  }
+}
+
+.flex-row {
+  display: flex;
+  max-height: 3rem;
+  min-height: 3rem;
+  position: relative;
+}
+
+.flex-row.errored {
+  box-shadow: 0px 0px 0px 5px var(--background);
+}
+
+.flex-row.errored .errorLabel {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: -2.5em;
+  transform: translate(0, -50%);
+  svg {
+    opacity: 1 !important;
+    fill: var(--background) !important;
+  }
+  background: transparent !important;
+}
+
+#errorMessage {
+  color: var(--background);
+  text-align: center;
+  font-size: 1rem;
+  outline: 2px solid var(--textColor);
+
+  &:empty {
+    outline: none;
+  }
+}
+
+.errorLabel {
+  display: none;
+}
+
+label {
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  svg {
+    width: 18px;
+    fill: var(--background);
+  }
+  background: var(--accentSix);
+  cursor: pointer;
+}
+
+input {
+  width: 1rem;
+  padding: 1rem;
+  flex: 1;
+  border: none;
+  font: unset;
+  &:focus {
+    outline: none;
+  }
+}
+
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  width: 100%;
+  background: var(--background);
+  border: 0;
+  color: var(--textColor);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 1000;
+  max-height: 3rem;
+  min-height: 3rem;
+  transition: var(--transitionTiming);
+  font: unset;
+
+  &:hover {
+    background-color: var(--accentSix);
+  }
+}
+
+.alternateOptions > :not(:last-child) {
+  margin-bottom: 1rem;
+}
+
+.providers {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.provider {
+  display: table;
+  cursor: pointer;
+  width: 100%;
+  max-height: 3rem;
+  min-height: 3rem;
+}
+
+.provider div {
+  margin: 0;
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  width: 100%;
+}
+
+.provider svg {
+  display: table-cell;
+  margin: 0;
+  background-color: var(--textColor);
+  width: 3rem;
+  height: 100%;
+}
+
+.provider.Google {
+  outline: 1px solid var(--textColor);
+  background: transparent;
+  color: var(--textColor);
+}

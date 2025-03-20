@@ -1,0 +1,283 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Custom functions to simplify rules
+    
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isCoachOrMentorInClass(classId) {
+      return exists(/databases/$(database)/documents/classes/$(classId)) &&
+             (request.auth.uid in get(/databases/$(database)/documents/classes/$(classId)).data.coaches ||
+              request.auth.uid in get(/databases/$(database)/documents/classes/$(classId)).data.mentors);
+    }
+
+    function isStudentInClass(classId) {
+      return exists(/databases/$(database)/documents/classes/$(classId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/classes/$(classId)).data.students;
+    }
+
+    function isMemberInClass(classId) {
+      return isCoachOrMentorInClass(classId) || isStudentInClass(classId);
+    }
+
+    // Users Collection
+    match /users/{userId} {
+    
+    	function isUser() {
+      	return request.auth != null && request.auth.uid == userId;
+    	}
+    
+      // Adult Account
+      allow create: if request.auth != null && !exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow read: if isUser() || isAdmin();
+      allow update: if isUser() || isAdmin();
+      allow delete: if isUser() || isAdmin();
+
+      // Fields for Adult Account
+      match /username {
+        allow read: if true;
+        allow update: if isUser() || isAdmin();
+      }
+      match /firstName {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /lastName {
+        allow read: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /lastInitial {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /email {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /sitePermissions {
+        allow read: if true;
+        allow update: if false; // System only
+      }
+      match /teamAssociation {
+        allow read: if true;
+        allow update: if isUser() || isAdmin();
+      }
+      match /formerIPs {
+        allow read: if isAdmin();
+        allow update: if false; // System only
+      }
+      match /createdDate {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /isCoaching {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /isMentoring {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /eventAssociation {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /accountType {
+        allow read: if true;
+        allow update: if false; // System only
+      }
+
+      // Youth Account
+      allow create: if request.auth != null;
+      allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+      allow update: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+      allow delete: if isUser() || isAdmin();
+
+      // Fields for Youth Account
+      match /username {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+      }
+      match /firstName {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /lastName {
+        allow read: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /lastInitial {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /email {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin();
+      }
+      match /sitePermissions {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if false; // System only
+      }
+      match /classAssociation {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /createdDate {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /accountType {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if false; // System only
+      }
+
+      // Class Account
+      allow create: if request.auth != null && (isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation));
+      allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+      allow update: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+      allow delete: if isUser() || isAdmin();
+
+      // Fields for Class Account
+      match /username {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+      }
+      match /firstName {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+      }
+      match /lastName {
+        allow read: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+        allow update: if isUser() || isAdmin() || isCoachOrMentorInClass(resource.data.classAssociation);
+      }
+      match /lastInitial {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if false; // System only
+      }
+      match /classAssociation {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if false; // System only
+      }
+      match /createdDate {
+        allow read: if isUser() || isAdmin();
+        allow update: if false; // System only
+      }
+      match /accountType {
+        allow read: if isUser() || isAdmin() || isMemberInClass(resource.data.classAssociation);
+        allow update: if false; // System only
+      }
+    }
+
+    // Classes Collection
+    match /classes/{classId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+      allow update: if request.auth != null && (isCoachOrMentorInClass(classId) || isAdmin());
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.createdBy || isAdmin());
+
+      // Fields for Class
+      match /className {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || isAdmin());
+      }
+      match /createdBy {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if false; // System only
+      }
+      match /createdDate {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if false; // System only
+      }
+      match /students {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if request.auth != null && (isCoachOrMentorInClass(classId) || isAdmin());
+      }
+      match /coaches {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || isAdmin());
+      }
+      match /mentors {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if request.auth != null && (isCoachOrMentorInClass(classId) || isAdmin());
+      }
+      match /classCode {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if false; // System only
+      }
+      match /requestedPasswordReset {
+        allow read: if request.auth != null && (isMemberInClass(classId) || isAdmin());
+        allow update: if false; // System only
+      }
+    }
+
+    // Events Collection
+    match /events/{eventId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+      allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.createdBy || isAdmin());
+
+      // Fields for Event
+      match /eventName {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /createdDate {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if false; // System only
+      }
+      match /primaryContact {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /secondaryContacts {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /location {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /start {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /end {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /type {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /venueName {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /country {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /region {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /postalCode {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /city {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+      match /challengeType {
+        allow read: if request.auth != null && (resource.data.eventApproved == true || isAdmin() || request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || request.auth.uid in resource.data.secondaryContacts);
+        allow update: if request.auth != null && (request.auth.uid == resource.data.createdBy || request.auth.uid == resource.data.primaryContact || isAdmin());
+      }
+    }
+  }
+}
